@@ -1,0 +1,11 @@
+# Beads task tracking (ephemeral)
+.beads/
+
+# MCP config (user-specific paths)
+.mcp.json
+
+# Dependencies
+node_modules/
+
+# Install artifacts
+*.tgz

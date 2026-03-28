@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node:*)",
+      "Bash(npx --ignore-scripts beads-orchestration@latest bootstrap --project-name \"Daily Desk\" --project-dir \".\" --with-kanban-ui)",
+      "Bash(npm pack:*)",
+      "Bash(npm install:*)",
+      "Bash(unzip -o beads.zip bd.exe)",
+      "Bash(cp bd.exe \"C:/Users/bryan/AppData/Roaming/npm/bd.exe\")",
+      "Bash(bd --version)",
+      "Bash(export PATH=\"$PATH:C:/Users/bryan/.local/bin\")",
+      "Bash(bd init:*)"
+    ]
+  }
+}
