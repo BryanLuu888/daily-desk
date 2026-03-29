@@ -4,6 +4,7 @@ import TodoPanel from "@/components/panels/TodoPanel";
 import MealPlannerPanel from "@/components/panels/MealPlannerPanel";
 import WeatherPanel from "@/components/panels/WeatherPanel";
 import CalendarPanel from "@/components/panels/CalendarPanel";
+import MorningBriefingPanel from "@/components/panels/MorningBriefingPanel";
 
 export default function Home() {
   return (
@@ -35,7 +36,7 @@ export default function Home() {
         </Panel>
 
         <Panel title="Morning Briefing">
-          <p className="text-sm text-gray-500">Coming soon...</p>
+          <MorningBriefingPanel />
         </Panel>
       </main>
     </div>
