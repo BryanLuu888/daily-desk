@@ -199,8 +199,106 @@ Log learnings: `bd comment {ID} "LEARNED: [insight]"` — captured automatically
 - localStorage persistence for To-Do and Meal Planner (usePersistedReducer hook)
 - StorageAdapter interface for future SQLite migration (src/lib/storage.ts)
 - Shared calendar mock data (src/data/calendarEvents.ts)
+- Google Calendar integration (OAuth 2.0, live events)
 
-### Planned: Google Calendar Integration
+### Planned: Enhanced To-Do Panel
+
+**Goal:** Make the To-Do panel a robust task manager with priorities, drag-and-drop reordering, and automatic cleanup of completed tasks.
+
+#### Task Data Shape (updated)
+
+```typescript
+interface Task {
+  id: string;
+  text: string;
+  completed: boolean;
+  priority: "high" | "medium" | "low";
+  completedAt: string | null;  // ISO timestamp when completed, null if incomplete
+  order: number;               // manual sort position for drag-and-drop
+}
+```
+
+#### Feature 1: Priority Levels
+
+- 3 levels: **High** (red), **Medium** (yellow), **Low** (green)
+- Each task gets a colored dot/indicator next to its text
+- Default priority for new tasks: **Medium**
+- Quick-set priority: dropdown or clickable dot that cycles through levels
+- Visual hierarchy: high-priority tasks should be visually distinct (bolder, colored left border, or similar)
+
+#### Feature 2: Drag-and-Drop Reordering
+
+- User can drag tasks to reorder them manually
+- Use `@dnd-kit/core` + `@dnd-kit/sortable` (lightweight, React-native, accessible)
+- Drag handle on the left side of each task (grip icon)
+- Order persists to localStorage via the existing `usePersistedReducer`
+- Smooth animation during drag
+
+**Package:** `@dnd-kit/core`, `@dnd-kit/sortable`, `@dnd-kit/utilities`
+
+#### Feature 3: Completed Task Cleanup
+
+- When a task is marked complete, record `completedAt` timestamp
+- On app load, check each completed task's `completedAt`:
+  - If `completedAt` is **before today's midnight** → remove it from the list
+  - If `completedAt` is **today** → keep it visible (with strikethrough)
+- Cleanup runs in the reducer's lazy initializer (when loading from localStorage)
+- No user action needed — stale tasks silently disappear the next day
+
+#### Feature 4: Updated "Do Next" Behavior
+
+- "Do Next" now picks the highest-priority incomplete task first
+- Among tasks of equal priority, picks the one with the lowest `order` (top of list)
+- Clicking again cycles to the next highest-priority incomplete task
+- If all incomplete tasks have been cycled through, wraps to the beginning
+
+#### New Reducer Actions
+
+```typescript
+type Action =
+  | { type: "ADD_TASK"; text: string; priority?: "high" | "medium" | "low" }
+  | { type: "TOGGLE_TASK"; id: string }
+  | { type: "SET_PRIORITY"; id: string; priority: "high" | "medium" | "low" }
+  | { type: "REORDER"; activeId: string; overId: string }
+  | { type: "SET_DO_NEXT"; id: string | null }
+  | { type: "DELETE_TASK"; id: string }
+```
+
+#### UI Layout (within existing Panel)
+
+```
+┌─────────────────────────────────┐
+│ [input field] [priority] [Add]  │  ← quick add with priority selector
+├─────────────────────────────────┤
+│ ≡ ● Task text here         [✓] │  ← grip handle, priority dot, checkbox
+│ ≡ ● Task text here         [✓] │
+│ ≡ ● Task text here (done)  [✓] │  ← strikethrough, muted
+├─────────────────────────────────┤
+│         [Do Next]               │  ← picks highest priority incomplete
+└─────────────────────────────────┘
+```
+
+#### Implementation Files
+
+**Modified:**
+- `src/components/panels/TodoPanel.tsx` — major rewrite: new Task shape, priority UI, drag-and-drop, cleanup logic, updated Do Next
+
+**New (optional):**
+- `src/components/ui/PriorityDot.tsx` — small reusable priority indicator component (if needed)
+
+**Dependencies to install:**
+- `@dnd-kit/core`
+- `@dnd-kit/sortable`
+- `@dnd-kit/utilities`
+
+#### Migration
+
+Existing localStorage data (key: "todo") has the old Task shape without `priority`, `completedAt`, or `order`. The reducer's lazy initializer must migrate old data:
+- Missing `priority` → default to `"medium"`
+- Missing `completedAt` → if `completed` is true, set to today's date; if false, set to `null`
+- Missing `order` → assign based on array index
+
+### Completed: Google Calendar Integration
 
 **Goal:** Replace mock calendar data with real events from the user's Google Calendar. Read-only, today's events only.
 
@@ -281,11 +379,11 @@ Log learnings: `bd comment {ID} "LEARNED: [insight]"` — captured automatically
 
 ## Current State
 
-Phase 2: All v1 panels complete. localStorage persistence added. Google Calendar integration specified, ready to implement.
+Phase 2: All v1 panels complete. localStorage persistence added. Google Calendar live. Enhanced To-Do panel specified, ready to implement.
 
 ### Architecture Notes
 - Persistence: src/lib/usePersistedReducer.ts wraps useReducer with localStorage read/write
 - Storage keys: "todo", "meals"
 - Weather: OpenWeatherMap API via src/app/api/weather/route.ts, city configurable via WEATHER_CITY env var
-- Calendar: currently mock data from src/data/calendarEvents.ts, will migrate to Google Calendar API
+- Calendar: Google Calendar API via OAuth 2.0, tokens in .google-tokens.json, fallback to mock data
 - All panels are independent client components, no shared state/context
