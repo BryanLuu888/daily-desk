@@ -1,95 +1,125 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import {
+  generateBriefing,
+  type BriefingContext,
+  type BriefingItem,
+} from "@/lib/briefingRules";
 
 interface WeatherData {
   temp: number;
+  high: number;
+  low: number;
   description: string;
 }
 
-const PRODUCTIVITY_TIPS = [
-  "Focus on your top 3 tasks.",
-  "Take breaks every 90 minutes.",
-  "Drink water before coffee.",
-  "Block time for deep work.",
-  "Review tomorrow's calendar tonight.",
-  "Start with your hardest task.",
-  "Keep your workspace clutter-free.",
-];
-
-function getGreeting(): string {
-  const hour = new Date().getHours();
-  if (hour < 12) return "Good morning — here's your day at a glance.";
-  if (hour < 17) return "Good afternoon — stay on track.";
-  return "Good evening — time to wind down.";
+interface CalendarResponse {
+  connected: boolean;
+  events: {
+    id: string;
+    time: string;
+    hour: number;
+    minute: number;
+    title: string;
+    location?: string;
+  }[];
 }
 
-function getDayTip(): string | null {
-  const day = new Date().getDay();
-  if (day === 1) return "Start the week strong — review your priorities.";
-  if (day === 3) return "Midweek check-in — are you on track?";
-  if (day === 5) return "It's Friday — wrap up loose ends and plan your weekend.";
-  return null;
-}
-
-function getWeatherTip(weather: WeatherData): string {
-  const desc = weather.description.toLowerCase();
-  if (weather.temp > 85) return "It's hot out — stay hydrated.";
-  if (weather.temp < 40) return "Bundle up — it's cold outside.";
-  if (desc.includes("rain")) return "Rain expected — grab an umbrella.";
-  if (desc.includes("cloud")) return "Cloudy skies today.";
-  return "Nice weather — enjoy your day.";
-}
-
-function getProductivityTip(): string {
-  const index = new Date().getDate() % PRODUCTIVITY_TIPS.length;
-  return PRODUCTIVITY_TIPS[index];
+function loadTasks(): BriefingContext["tasks"] {
+  if (typeof window === "undefined") return [];
+  try {
+    const stored = localStorage.getItem("todo");
+    if (stored) {
+      const state = JSON.parse(stored);
+      return (state.tasks || []).map(
+        (t: { id: string; text: string; completed: boolean; priority?: string }) => ({
+          id: t.id,
+          text: t.text,
+          completed: t.completed,
+          priority: t.priority || "medium",
+        }),
+      );
+    }
+  } catch {
+    /* ignore parse errors */
+  }
+  return [];
 }
 
 export default function MorningBriefingPanel() {
-  const [weather, setWeather] = useState<WeatherData | null>(null);
+  const [items, setItems] = useState<BriefingItem[] | null>(null);
 
   useEffect(() => {
-    fetch("/api/weather")
-      .then((res) => res.json())
-      .then((data: WeatherData) => setWeather(data))
-      .catch(() => {
-        /* weather tip simply won't show */
-      });
+    let cancelled = false;
+
+    async function loadBriefing() {
+      const tasks = loadTasks();
+
+      // Fetch weather and calendar in parallel; tolerate failures
+      const [weatherResult, calendarResult] = await Promise.allSettled([
+        fetch("/api/weather").then((r) => r.json() as Promise<WeatherData>),
+        fetch("/api/calendar/events").then(
+          (r) => r.json() as Promise<CalendarResponse>,
+        ),
+      ]);
+
+      if (cancelled) return;
+
+      const weather: BriefingContext["weather"] =
+        weatherResult.status === "fulfilled" ? weatherResult.value : null;
+
+      const events: BriefingContext["events"] =
+        calendarResult.status === "fulfilled"
+          ? calendarResult.value.events
+          : [];
+
+      const briefing = generateBriefing({ tasks, events, weather });
+      setItems(briefing);
+    }
+
+    loadBriefing();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const greeting = getGreeting();
-  const dayTip = getDayTip();
-  const productivityTip = getProductivityTip();
-
-  const items: { text: string; bold?: boolean }[] = [
-    { text: greeting, bold: true },
-  ];
-
-  if (dayTip) items.push({ text: dayTip });
-
-  if (weather) {
-    items.push({ text: getWeatherTip(weather) });
+  if (!items) {
+    return (
+      <ul className="space-y-3">
+        {[0, 1, 2].map((i) => (
+          <li
+            key={i}
+            className="flex items-start gap-2 text-sm text-gray-400"
+          >
+            <span className="mt-0.5 block h-1.5 w-1.5 shrink-0 rounded-full bg-gray-200" />
+            <span className="h-4 w-48 animate-pulse rounded bg-gray-100" />
+          </li>
+        ))}
+      </ul>
+    );
   }
-
-  items.push({ text: productivityTip });
 
   return (
     <ul className="space-y-3">
       {items.map((item, i) => (
-        <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
+        <li
+          key={i}
+          className="flex items-start gap-2 text-sm text-gray-600"
+        >
           <span className="mt-0.5 block h-1.5 w-1.5 shrink-0 rounded-full bg-gray-300" />
-          <span className={item.bold ? "font-medium text-gray-800" : ""}>
+          <span
+            className={
+              item.category === "greeting"
+                ? "font-medium text-gray-800"
+                : ""
+            }
+          >
             {item.text}
           </span>
         </li>
       ))}
-      {!weather && (
-        <li className="flex items-start gap-2 text-sm text-gray-400">
-          <span className="mt-0.5 block h-1.5 w-1.5 shrink-0 rounded-full bg-gray-200" />
-          <span>Loading weather tip...</span>
-        </li>
-      )}
     </ul>
   );
 }
