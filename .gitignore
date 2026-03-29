@@ -29,3 +29,6 @@ npm-debug.log*
 .dolt/
 *.db
 .beads-credential-key
+
+# Google OAuth tokens
+.google-tokens.json

@@ -6,6 +6,7 @@ import WeatherPanel from "@/components/panels/WeatherPanel";
 import CalendarPanel from "@/components/panels/CalendarPanel";
 import MorningBriefingPanel from "@/components/panels/MorningBriefingPanel";
 import TodaySummaryPanel from "@/components/panels/TodaySummaryPanel";
+import ConnectCalendarLink from "@/components/ConnectCalendarLink";
 
 export default function Home() {
   return (
@@ -29,6 +30,7 @@ export default function Home() {
         </Panel>
 
         <Panel title="Calendar">
+          <ConnectCalendarLink />
           <CalendarPanel />
         </Panel>
 

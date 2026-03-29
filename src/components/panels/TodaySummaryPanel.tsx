@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { MOCK_EVENTS, type CalendarEvent } from "@/data/calendarEvents";
+import { useState, useEffect, useCallback } from "react";
+import { type CalendarEvent } from "@/data/calendarEvents";
 
 interface WeatherData {
   temp: number;
@@ -31,9 +31,21 @@ function formatDate(date: Date): string {
 
 export default function TodaySummaryPanel() {
   const [weather, setWeather] = useState<WeatherData | null>(null);
+  const [events, setEvents] = useState<CalendarEvent[] | null>(null);
   const [nextEvent, setNextEvent] = useState<CalendarEvent | null | undefined>(
     undefined
   );
+
+  const fetchEvents = useCallback(async () => {
+    try {
+      const res = await fetch("/api/calendar/events");
+      const data: { connected: boolean; events: CalendarEvent[] } =
+        await res.json();
+      setEvents(data.events);
+    } catch {
+      // Keep existing events on failure
+    }
+  }, []);
 
   useEffect(() => {
     fetch("/api/weather")
@@ -43,13 +55,20 @@ export default function TodaySummaryPanel() {
   }, []);
 
   useEffect(() => {
+    fetchEvents();
+    const interval = setInterval(fetchEvents, 60_000);
+    return () => clearInterval(interval);
+  }, [fetchEvents]);
+
+  useEffect(() => {
+    if (!events) return;
     function update() {
-      setNextEvent(getNextEvent(MOCK_EVENTS, new Date()));
+      setNextEvent(getNextEvent(events!, new Date()));
     }
     update();
     const interval = setInterval(update, 60_000);
     return () => clearInterval(interval);
-  }, []);
+  }, [events]);
 
   const rows = [
     {
