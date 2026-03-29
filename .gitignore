@@ -7,5 +7,20 @@
 # Dependencies
 node_modules/
 
+# Next.js
+/.next/
+/out/
+next-env.d.ts
+
 # Install artifacts
 *.tgz
+
+# Misc
+.DS_Store
+*.pem
+
+# Debug
+npm-debug.log*
+
+# Env files
+.env*.local
