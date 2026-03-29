@@ -193,12 +193,18 @@ Log learnings: `bd comment {ID} "LEARNED: [insight]"` — captured automatically
 - nextjs-supervisor — frontend implementation (Next.js, React, TypeScript, Tailwind)
 - merge-supervisor — git merge conflict resolution
 
+## v2 Features
+
+- localStorage persistence for To-Do and Meal Planner (usePersistedReducer hook)
+- StorageAdapter interface for future SQLite migration (src/lib/storage.ts)
+- Shared calendar mock data (src/data/calendarEvents.ts)
+
 ## Current State
 
-<!--
-ORCHESTRATOR: Update this section as the project evolves.
-Include: active work, recent decisions, known issues, architectural notes.
-Keep it concise — pointers to files are better than duplicated content.
--->
+Phase 2: All v1 panels complete. localStorage persistence added. Next: SQLite, real calendar integration, UX polish.
 
-Phase 1: App foundation — layout, dashboard page, panel component structure, basic styling.
+### Architecture Notes
+- Persistence: src/lib/usePersistedReducer.ts wraps useReducer with localStorage read/write
+- Storage keys: "todo", "meals"
+- Weather: OpenWeatherMap API via src/app/api/weather/route.ts, city configurable via WEATHER_CITY env var
+- All panels are independent client components, no shared state/context
