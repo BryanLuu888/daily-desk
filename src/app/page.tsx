@@ -3,6 +3,7 @@ import DateDisplay from "@/components/DateDisplay";
 import TodoPanel from "@/components/panels/TodoPanel";
 import MealPlannerPanel from "@/components/panels/MealPlannerPanel";
 import WeatherPanel from "@/components/panels/WeatherPanel";
+import CalendarPanel from "@/components/panels/CalendarPanel";
 
 export default function Home() {
   return (
@@ -26,7 +27,7 @@ export default function Home() {
         </Panel>
 
         <Panel title="Calendar">
-          <p className="text-sm text-gray-500">Coming soon...</p>
+          <CalendarPanel />
         </Panel>
 
         <Panel title="Weather">
