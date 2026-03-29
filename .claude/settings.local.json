@@ -2,37 +2,14 @@
   "permissions": {
     "allow": [
       "Bash(node:*)",
-      "Bash(npx --ignore-scripts beads-orchestration@latest bootstrap --project-name \"Daily Desk\" --project-dir \".\" --with-kanban-ui)",
-      "Bash(npm pack:*)",
-      "Bash(npm install:*)",
-      "Bash(unzip -o beads.zip bd.exe)",
-      "Bash(cp bd.exe \"C:/Users/bryan/AppData/Roaming/npm/bd.exe\")",
-      "Bash(bd --version)",
-      "Bash(export PATH=\"$PATH:C:/Users/bryan/.local/bin\")",
-      "Bash(bd init:*)",
-      "Bash(git config:*)",
-      "Bash(bd create:*)",
-      "Bash(winget list:*)",
-      "Bash(choco list:*)",
-      "Bash(export PATH=\"$HOME/bin:$PATH\")",
-      "Bash(bd doctor:*)",
-      "Bash(bd comment:*)",
-      "Bash(bd comments:*)",
-      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --no-import-alias --use-npm --yes)",
-      "Bash(npx create-next-app@latest ./temp-scaffold --typescript --tailwind --eslint --app --src-dir --no-import-alias --use-npm --yes)",
-      "Bash(cd:*)",
-      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --no-import-alias --use-npm --yes --overwrite)",
-      "Bash(npx create-next-app@latest temp-scaffold --typescript --tailwind --eslint --app --src-dir --no-import-alias --use-npm --yes2222)",
-      "Bash(WD=\"C:/Users/bryan/Downloads/Personal Dashboard/.claude/worktrees/agent-a7036995\")",
-      "Read(//c/Users/bryan/Downloads/Personal Dashboard/.claude/worktrees/agent-a7036995/**)",
-      "Bash(cp temp-scaffold/package.json temp-scaffold/package-lock.json temp-scaffold/tsconfig.json temp-scaffold/next.config.ts temp-scaffold/postcss.config.mjs temp-scaffold/eslint.config.mjs temp-scaffold/next-env.d.ts .)",
-      "Bash(cp -r temp-scaffold/src .)",
-      "Bash(cp -r temp-scaffold/public .)",
-      "Bash(rm -rf temp-scaffold)",
-      "Bash(rm -rf .next)",
       "Bash(npm run:*)",
       "Bash(bd update:*)",
-      "Bash(bd list:*)"
+      "Bash(bd list:*)",
+      "Bash(bd create:*)",
+      "Bash(bd comments:*)",
+      "Bash(bd doctor:*)",
+      "Bash(export PATH=\"$HOME/bin:$PATH\")",
+      "Bash(git config:*)"
     ]
   }
 }
