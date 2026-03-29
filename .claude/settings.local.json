@@ -30,7 +30,9 @@
       "Bash(cp -r temp-scaffold/public .)",
       "Bash(rm -rf temp-scaffold)",
       "Bash(rm -rf .next)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(bd update:*)",
+      "Bash(bd list:*)"
     ]
   }
 }
