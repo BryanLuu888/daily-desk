@@ -15,7 +15,7 @@ const MOCK_WEATHER: WeatherResponse = {
   low: 14,
   description: "Partly cloudy",
   icon: "02d",
-  city: "Toronto",
+  city: "Houston",
 };
 
 export async function GET() {
@@ -26,7 +26,8 @@ export async function GET() {
   }
 
   try {
-    const url = `https://api.openweathermap.org/data/2.5/weather?q=Toronto&units=metric&appid=${apiKey}`;
+    const city = process.env.WEATHER_CITY || "Houston";
+    const url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&units=imperial&appid=${apiKey}`;
     const res = await fetch(url, { next: { revalidate: 600 } });
 
     if (!res.ok) {

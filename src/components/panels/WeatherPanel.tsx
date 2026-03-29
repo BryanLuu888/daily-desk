@@ -60,7 +60,7 @@ export default function WeatherPanel() {
         className="my-1"
       />
 
-      <p className="text-5xl font-bold text-gray-900">{Math.round(weather.temp)}°C</p>
+      <p className="text-5xl font-bold text-gray-900">{Math.round(weather.temp)}°F</p>
 
       <p className="mt-1 text-sm text-gray-600">{capitalizedDescription}</p>
 
