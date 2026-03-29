@@ -195,16 +195,97 @@ Log learnings: `bd comment {ID} "LEARNED: [insight]"` — captured automatically
 
 ## v2 Features
 
+### Completed
 - localStorage persistence for To-Do and Meal Planner (usePersistedReducer hook)
 - StorageAdapter interface for future SQLite migration (src/lib/storage.ts)
 - Shared calendar mock data (src/data/calendarEvents.ts)
 
+### Planned: Google Calendar Integration
+
+**Goal:** Replace mock calendar data with real events from the user's Google Calendar. Read-only, today's events only.
+
+**Approach:** OAuth 2.0 with `googleapis` npm package. One-time browser auth flow, then token refresh handled server-side.
+
+#### Prerequisites (manual setup by user)
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com)
+2. Create a project (e.g., "Daily Desk")
+3. Enable the **Google Calendar API**
+4. Configure **OAuth consent screen**:
+   - User type: External
+   - App name: "Daily Desk"
+   - Scopes: add `https://www.googleapis.com/auth/calendar.readonly`
+   - Add yourself as a test user (required while app is in "Testing" status)
+5. Create **OAuth 2.0 credentials** (Web application):
+   - Authorized redirect URI: `http://localhost:3000/api/auth/callback`
+6. Copy Client ID and Client Secret into `.env.local`:
+   ```
+   GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
+   GOOGLE_CLIENT_SECRET=your-client-secret
+   GOOGLE_REDIRECT_URI=http://localhost:3000/api/auth/callback
+   ```
+
+#### Implementation Spec
+
+**Package:** `googleapis` (includes google-auth-library)
+
+**New files:**
+- `src/app/api/auth/login/route.ts` — Generates Google OAuth URL, redirects user to Google consent screen
+- `src/app/api/auth/callback/route.ts` — Handles OAuth callback, exchanges code for tokens, stores refresh token in `.env.local` or a local JSON file (e.g., `.google-tokens.json`), redirects to dashboard
+- `src/app/api/calendar/events/route.ts` — Fetches today's events from Google Calendar API using stored tokens. Falls back to mock data if no tokens or on error.
+- `src/lib/googleAuth.ts` — Shared OAuth2 client setup, token loading, and refresh logic
+
+**Modified files:**
+- `src/components/panels/CalendarPanel.tsx` — Fetch from `/api/calendar/events` instead of using MOCK_EVENTS. Show loading state. Fall back to mock if API fails.
+- `src/components/panels/TodaySummaryPanel.tsx` — Fetch from `/api/calendar/events` for the "next event" row. Fall back to mock.
+- `src/app/page.tsx` — Add a small "Connect Calendar" button/link (only shown when not connected)
+
+**API route: `/api/calendar/events`**
+- Uses `googleapis` to call `calendar.events.list` with:
+  - `calendarId: "primary"`
+  - `timeMin`: start of today (midnight, local timezone)
+  - `timeMax`: end of today (23:59:59, local timezone)
+  - `singleEvents: true` (expand recurring events)
+  - `orderBy: "startTime"`
+  - `maxResults: 20`
+- Maps Google response to existing `CalendarEvent` shape from `src/data/calendarEvents.ts`
+- Revalidates every 5 minutes (`next: { revalidate: 300 }`)
+- Returns mock data if no credentials or on API error
+
+**Token storage (local-first approach):**
+- Store refresh token in `.google-tokens.json` at project root (gitignored)
+- On each API request: load refresh token → get fresh access token → call API
+- `googleapis` handles token refresh automatically via OAuth2Client
+
+**Auth flow:**
+1. User visits dashboard, sees "Connect Calendar" link
+2. Clicks → redirected to `/api/auth/login` → Google consent screen
+3. Grants access → callback saves refresh token → redirects to dashboard
+4. Calendar panel now shows real events
+5. Subsequent visits: tokens auto-refresh, no login needed
+
+**Security:**
+- All tokens server-side only (API routes)
+- `.google-tokens.json` is gitignored
+- Client ID and secret in `.env.local` (gitignored)
+- Only `calendar.readonly` scope — minimal permissions
+
+**Fallback behavior:**
+- No Google credentials → show mock data (same as v1)
+- API error or token expired and unrecoverable → show mock data with subtle "Calendar disconnected" indicator
+
+#### Files to gitignore
+```
+.google-tokens.json
+```
+
 ## Current State
 
-Phase 2: All v1 panels complete. localStorage persistence added. Next: SQLite, real calendar integration, UX polish.
+Phase 2: All v1 panels complete. localStorage persistence added. Google Calendar integration specified, ready to implement.
 
 ### Architecture Notes
 - Persistence: src/lib/usePersistedReducer.ts wraps useReducer with localStorage read/write
 - Storage keys: "todo", "meals"
 - Weather: OpenWeatherMap API via src/app/api/weather/route.ts, city configurable via WEATHER_CITY env var
+- Calendar: currently mock data from src/data/calendarEvents.ts, will migrate to Google Calendar API
 - All panels are independent client components, no shared state/context
