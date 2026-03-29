@@ -201,7 +201,116 @@ Log learnings: `bd comment {ID} "LEARNED: [insight]"` — captured automatically
 - Shared calendar mock data (src/data/calendarEvents.ts)
 - Google Calendar integration (OAuth 2.0, live events)
 
-### Planned: Enhanced To-Do Panel
+### Planned: Smart Morning Briefing
+
+**Goal:** Upgrade the Morning Briefing from static tips to a context-aware briefing that cross-references tasks, calendar, and weather to generate natural-sounding, actionable insights. No AI API — purely rule-based but feels intelligent.
+
+**Approach:** Server-side API route (`/api/briefing`) that gathers data from all sources, runs a rules engine, and returns prioritized briefing items. Client component fetches and displays.
+
+#### Data Sources
+
+1. **Tasks** — fetch from localStorage via a new API route or pass client-side
+   - Since tasks are in localStorage (client-only), the briefing component reads tasks directly from the same `usePersistedReducer` state, or we create a shared context/prop. Simplest: the briefing component fetches task data client-side from localStorage.
+   - Actually simplest: create a `/api/briefing` route that accepts task/calendar context as a POST body from the client, then runs the rules engine server-side. Or keep it all client-side since all data is accessible there.
+   - **Decision: Keep it all client-side.** The MorningBriefingPanel fetches weather + calendar APIs, reads tasks from localStorage directly, then runs the rules engine in the component.
+
+2. **Calendar** — fetch from `/api/calendar/events` (already exists)
+   - Number of events, first event time, gaps between events, busy vs light day
+
+3. **Weather** — fetch from `/api/weather` (already exists)
+   - Temperature, conditions, extreme weather alerts
+
+#### Rules Engine Categories
+
+**1. Task Insights** (based on To-Do data from localStorage)
+- Task count: "You have {n} tasks today — {high} high priority."
+- All done: "All tasks complete — nice work!"
+- No tasks: "No tasks yet — add some to stay on track."
+- High-priority focus: "Your top priority: {task name}. Tackle it first."
+- Many incomplete: "You have {n} incomplete tasks. Consider trimming your list."
+- Weekend context: "It's the weekend — focus on personal tasks or recharge."
+
+**2. Calendar + Task Cross-references**
+- Busy morning + high priority tasks: "Packed morning — tackle '{task}' before your {time} {event}."
+- Back-to-back meetings: "Back-to-back meetings from {start} to {end}. Block focus time after."
+- Light calendar: "Light calendar day — great for deep work."
+- No events: "No events today — use the time intentionally."
+- First event timing: "First event at {time} — you have {n} hours of focus time."
+- Gap detection: "You have a {duration} gap between {event1} and {event2} — good for task work."
+
+**3. Weather-Aware**
+- Hot day + outdoor events: "It's {temp}°F — stay hydrated, especially before {outdoor event}."
+- Rain: "Rain expected — adjust any outdoor plans."
+- Nice weather: "Great weather today — take a walking meeting if you can."
+- Extreme cold: "Bundle up — {temp}°F today."
+- Temperature + time of day: "It'll warm up later — {temp}°F now but expect {high}°F."
+
+**4. Time-Aware**
+- Morning (before noon): Greeting + full day preview
+- Afternoon: "Afternoon check-in — {n} tasks remaining, {n} events left."
+- Evening: "Winding down — {n} tasks incomplete. Tomorrow is a fresh start."
+- Late night: "Still up? Consider wrapping up and planning tomorrow."
+
+**5. Day-of-Week Context**
+- Monday: "New week — review your priorities and set the tone."
+- Wednesday: "Midweek — reassess what's realistic for the rest of the week."
+- Friday: "Almost weekend — close out what you can, defer the rest."
+- Weekend: "Weekend mode — rest, recharge, or catch up on personal projects."
+
+#### Priority & Selection Logic
+
+- Each rule produces an item with a **priority score** (1-10)
+- Higher scores for more specific/actionable insights (cross-referenced > generic)
+- Select the **top 4-5 items**, ensuring variety across categories
+- Never show more than 2 items from the same category
+- Always include the greeting as item #1
+
+#### Item Priority Scoring
+
+| Type | Base Score | Boost Conditions |
+|------|-----------|-----------------|
+| Greeting | 10 | Always first |
+| Task + Calendar cross-ref | 8-9 | High-priority task + imminent meeting |
+| Task insight (specific) | 7 | Names a specific task |
+| Task insight (general) | 5 | Just counts |
+| Calendar insight | 6-7 | Busy day or notable gaps |
+| Weather alert | 7 | Extreme temps or rain |
+| Weather general | 3 | Nice day, cloudy |
+| Day-of-week tip | 4 | Always available |
+| Productivity tip | 2 | Fallback filler |
+
+#### Implementation Files
+
+**Modified:**
+- `src/components/panels/MorningBriefingPanel.tsx` — major rewrite: fetch all data sources, run rules engine, display top items
+
+**New:**
+- `src/lib/briefingRules.ts` — rules engine: takes tasks + calendar events + weather → returns scored briefing items
+
+#### Reading Tasks from localStorage
+
+The briefing panel needs access to the To-Do task list. Since tasks are in localStorage under the key `"todo"`, the simplest approach:
+```typescript
+function loadTasks(): Task[] {
+  try {
+    const stored = localStorage.getItem("todo");
+    if (stored) {
+      const state = JSON.parse(stored);
+      return state.tasks || [];
+    }
+  } catch {}
+  return [];
+}
+```
+This reads directly from localStorage without needing shared state or context.
+
+#### CalendarEvent Shape (from /api/calendar/events)
+```typescript
+{ connected: boolean; events: CalendarEvent[] }
+// CalendarEvent: { id, time, hour, minute, title, location? }
+```
+
+### Completed: Enhanced To-Do Panel
 
 **Goal:** Make the To-Do panel a robust task manager with priorities, drag-and-drop reordering, and automatic cleanup of completed tasks.
 
