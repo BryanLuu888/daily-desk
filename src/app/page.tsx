@@ -5,6 +5,7 @@ import MealPlannerPanel from "@/components/panels/MealPlannerPanel";
 import WeatherPanel from "@/components/panels/WeatherPanel";
 import CalendarPanel from "@/components/panels/CalendarPanel";
 import MorningBriefingPanel from "@/components/panels/MorningBriefingPanel";
+import TodaySummaryPanel from "@/components/panels/TodaySummaryPanel";
 
 export default function Home() {
   return (
@@ -16,7 +17,7 @@ export default function Home() {
 
       <main className="mx-auto grid max-w-7xl grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         <Panel title="Today Summary">
-          <p className="text-sm text-gray-500">Coming soon...</p>
+          <TodaySummaryPanel />
         </Panel>
 
         <Panel title="To-Do" className="row-span-2">
