@@ -1,26 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { MOCK_EVENTS, type CalendarEvent } from "@/data/calendarEvents";
 
 interface WeatherData {
   temp: number;
   description: string;
 }
-
-interface CalendarEvent {
-  time: string;
-  hour: number;
-  minute: number;
-  title: string;
-}
-
-const MOCK_EVENTS: CalendarEvent[] = [
-  { time: "9:00 AM", hour: 9, minute: 0, title: "Team standup" },
-  { time: "10:30 AM", hour: 10, minute: 30, title: "Design review" },
-  { time: "12:00 PM", hour: 12, minute: 0, title: "Lunch with Alex" },
-  { time: "2:00 PM", hour: 14, minute: 0, title: "Sprint planning" },
-  { time: "4:30 PM", hour: 16, minute: 30, title: "Gym" },
-];
 
 function getNextEvent(events: CalendarEvent[], now: Date): CalendarEvent | null {
   const currentMinutes = now.getHours() * 60 + now.getMinutes();

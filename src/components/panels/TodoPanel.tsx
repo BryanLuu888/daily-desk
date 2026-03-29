@@ -1,6 +1,7 @@
 "use client";
 
-import { useReducer, useState } from "react";
+import { useState } from "react";
+import { usePersistedReducer } from "@/lib/usePersistedReducer";
 
 interface Task {
   id: string;
@@ -46,15 +47,15 @@ function reducer(state: State, action: Action): State {
 
 const initialState: State = {
   tasks: [
-    { id: crypto.randomUUID(), text: "Review morning emails", completed: false },
-    { id: crypto.randomUUID(), text: "Plan weekly meals", completed: false },
-    { id: crypto.randomUUID(), text: "Update project notes", completed: false },
+    { id: "starter-1", text: "Review morning emails", completed: false },
+    { id: "starter-2", text: "Plan weekly meals", completed: false },
+    { id: "starter-3", text: "Update project notes", completed: false },
   ],
   doNextId: null,
 };
 
 export default function TodoPanel() {
-  const [state, dispatch] = useReducer(reducer, initialState);
+  const [state, dispatch] = usePersistedReducer("todo", reducer, initialState);
   const [input, setInput] = useState("");
 
   function handleAdd() {

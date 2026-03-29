@@ -1,6 +1,6 @@
 "use client";
 
-import { useReducer } from "react";
+import { usePersistedReducer } from "@/lib/usePersistedReducer";
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
 type Day = (typeof DAYS)[number];
@@ -54,7 +54,7 @@ function getTodayAbbreviation(): Day | null {
 }
 
 export default function MealPlannerPanel() {
-  const [state, dispatch] = useReducer(reducer, undefined, initState);
+  const [state, dispatch] = usePersistedReducer("meals", reducer, initState());
   const today = getTodayAbbreviation();
 
   return (
