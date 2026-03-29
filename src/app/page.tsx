@@ -1,5 +1,6 @@
 import Panel from "@/components/ui/Panel";
 import DateDisplay from "@/components/DateDisplay";
+import TodoPanel from "@/components/panels/TodoPanel";
 
 export default function Home() {
   return (
@@ -15,7 +16,7 @@ export default function Home() {
         </Panel>
 
         <Panel title="To-Do" className="row-span-2">
-          <p className="text-sm text-gray-500">Coming soon...</p>
+          <TodoPanel />
         </Panel>
 
         <Panel title="Meal Planner" className="row-span-2">
